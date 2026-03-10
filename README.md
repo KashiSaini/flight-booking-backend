@@ -8,17 +8,34 @@ A high-performance, containerized backend system designed for flight management.
 📁 Project Directory Structure
 
 flight_booking/
-├── app/                # Python Source Code
-│   ├── main.py         # FastAPI Entry point
-│   ├── models.py       # SQL/NoSQL Definitions
-│   ├── auth.py         # JWT & Security Logic
-│   ├── schemas.py      # Pydandtic Models
-│   └── booking.py      # Routers
-├── alembic/            # Database Migration History
-├── docker-compose.yml  # Infrastructure Blueprint
-├── Dockerfile          # Container Build Recipe
-├── .env                # Secrets and Configurations
-└── README.md           # Documentation
+│
+├── alembic/                 # Database migration scripts
+│
+├── app/
+│   │
+│   ├── admin.py             # Admin related API routes
+│   ├── auth.py              # Authentication APIs (login/register)
+│   ├── booking.py           # Flight seat booking APIs
+│   ├── database.py          # PostgreSQL async database setup
+│   ├── dependencies.py      # FastAPI dependency functions
+│   ├── main.py              # FastAPI application entry point
+│   ├── models.py            # SQLAlchemy database models
+│   ├── mongodb.py           # MongoDB connection for analytics
+│   ├── redis_client.py      # Redis connection for caching
+│   ├── schemas.py           # Pydantic request/response schemas
+│   ├── utils.py             # Utility functions (JWT, hashing, etc.)
+│   └── __pycache__/         # Python compiled cache files
+│
+├── tools/                   # Development helper scripts
+├── venv/                    # Python virtual environment
+│
+├── .dockerignore            # Files ignored during Docker build
+├── .env                     # Environment variables
+├── .gitignore               # Files ignored by Git
+├── alembic.ini              # Alembic migration configuration
+├── docker-compose.yml       # Multi-container Docker setup
+├── Dockerfile               # Docker image build instructions
+└── README.md                # Project documentation
 
 
 
