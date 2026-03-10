@@ -133,3 +133,13 @@ async def promote_to_admin(
     await db.refresh(target_user)
 
     return target_user
+
+
+@router.get("/get_users", response_model=list[UserResponse])
+async def get_users(current_user: User = Depends(get_admin_user), db: AsyncSession = Depends(get_db)):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    
+    result = await db.execute(select(User))
+    users = result.scalars().all()
+    return users
