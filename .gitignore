@@ -1,0 +1,16 @@
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
+
+# Sensitive database passwords
+.env
+
+# Docker volumes
+postgres_data/
+mongo_data/
+redis_data/
+
+# OS-specific files
+.DS_Store
+Thumbs.db

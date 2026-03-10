@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # 1. Your FastAPI Backend
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/code          # Maps your local folder to the container for "Live Reload"
+    depends_on:
+      - postgres
+      - redis
+      - mongo
+    env_file:
+      - .env
+
+  # 2. PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: kashi
+      POSTGRES_DB: flight
+    ports:
+      - "5433:5432"      # External Port 5433 for pgAdmin
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Permanent storage
+
+  # 3. Redis Cache
+  redis:
+    image: redis:alpine
+    ports:
+      - "6380:6379"      # External Port 6380 for your Ubuntu terminal
+    volumes:
+      - redis_data:/data # Permanent storage
+
+  # 4. MongoDB
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27018:27017"    # External Port 27018 for MongoDB Compass
+    volumes:
+      - mongo_data:/data/db # Permanent storage
+
+# The permanent virtual hard drives
+volumes:
+  postgres_data:
+  redis_data:
+  mongo_data:
