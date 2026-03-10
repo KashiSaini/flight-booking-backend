@@ -79,7 +79,7 @@ Redis                   6379                            6380
 
 🔒 Security & Authentication
 
-JWT Implementation: Uses OAuth2 with Password Bearer tokens.
+JWT Implementation: Uses JWT Token with Password Bearer tokens.
 
 Password Hashing: Implemented passlib with bcrypt for secure user credential storage.
 
