@@ -53,26 +53,59 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
+import asyncio
+from sqlalchemy.ext.asyncio import create_async_engine
+
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+    """Run migrations in 'online' mode using an async engine."""
+    
+    # Get the URL from your environment variables
+    # (Railway's DATABASE_URL with +asyncpg)
+    url = config.get_main_option("sqlalchemy.url")
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
+    # Create the Async Engine
+    connectable = create_async_engine(url, poolclass=pool.NullPool)
 
-    """
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
-
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
-
+    # Bridge function to run sync migrations inside the async connection
+    def do_run_migrations(connection):
+        context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
+
+    # Async helper to manage the connection
+    async def run_async_migrations():
+        async with connectable.connect() as connection:
+            await connection.run_sync(do_run_migrations)
+        await connectable.dispose()
+
+    # Run the loop
+    try:
+        asyncio.run(run_async_migrations())
+    except Exception:
+        # This handles cases where a loop is already running
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(run_async_migrations())
+
+# def run_migrations_online() -> None:
+#     """Run migrations in 'online' mode.
+
+#     In this scenario we need to create an Engine
+#     and associate a connection with the context.
+
+#     """
+#     connectable = engine_from_config(
+#         config.get_section(config.config_ini_section, {}),
+#         prefix="sqlalchemy.",
+#         poolclass=pool.NullPool,
+#     )
+
+#     with connectable.connect() as connection:
+#         context.configure(
+#             connection=connection, target_metadata=target_metadata
+#         )
+
+#         with context.begin_transaction():
+#             context.run_migrations()
 
 
 if context.is_offline_mode():
