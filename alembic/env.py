@@ -2,7 +2,12 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
+import asyncio
+import os
+from sqlalchemy.ext.asyncio import create_async_engine
+from logging.config import fileConfig
+from sqlalchemy import pool
+from alembic import context
 from alembic import context
 
 # this is the Alembic Config object, which provides
@@ -56,35 +61,70 @@ def run_migrations_offline() -> None:
 import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine
 
+
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode using an async engine."""
     
-    # Get the URL from your environment variables
-    # (Railway's DATABASE_URL with +asyncpg)
-    url = config.get_main_option("sqlalchemy.url")
+    # 1. Look for the Railway/Docker environment variable first
+    url = os.getenv("DATABASE_URL")
+    
+    # 2. If the variable is missing (like on your local laptop), 
+    # fallback to the URL in alembic.ini
+    if not url:
+        url = config.get_main_option("sqlalchemy.url")
 
-    # Create the Async Engine
+    # 3. Create the Async Engine (Using asyncpg)
     connectable = create_async_engine(url, poolclass=pool.NullPool)
 
-    # Bridge function to run sync migrations inside the async connection
+    # 4. Bridge function to run sync migrations inside the async connection
     def do_run_migrations(connection):
         context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
 
-    # Async helper to manage the connection
+    # 5. Async helper to manage the connection
     async def run_async_migrations():
         async with connectable.connect() as connection:
             await connection.run_sync(do_run_migrations)
         await connectable.dispose()
 
-    # Run the loop
+    # 6. Execute the migration loop
     try:
         asyncio.run(run_async_migrations())
-    except Exception:
-        # This handles cases where a loop is already running
+    except RuntimeError:
+        # Fallback if an event loop is already running
         loop = asyncio.get_event_loop()
         loop.run_until_complete(run_async_migrations())
+
+# def run_migrations_online() -> None:
+#     """Run migrations in 'online' mode using an async engine."""
+    
+#     # Get the URL from your environment variables
+#     # (Railway's DATABASE_URL with +asyncpg)
+#     url = config.get_main_option("sqlalchemy.url")
+
+#     # Create the Async Engine
+#     connectable = create_async_engine(url, poolclass=pool.NullPool)
+
+#     # Bridge function to run sync migrations inside the async connection
+#     def do_run_migrations(connection):
+#         context.configure(connection=connection, target_metadata=target_metadata)
+#         with context.begin_transaction():
+#             context.run_migrations()
+
+#     # Async helper to manage the connection
+#     async def run_async_migrations():
+#         async with connectable.connect() as connection:
+#             await connection.run_sync(do_run_migrations)
+#         await connectable.dispose()
+
+#     # Run the loop
+#     try:
+#         asyncio.run(run_async_migrations())
+#     except Exception:
+#         # This handles cases where a loop is already running
+#         loop = asyncio.get_event_loop()
+#         loop.run_until_complete(run_async_migrations())
 
 # def run_migrations_online() -> None:
 #     """Run migrations in 'online' mode.
