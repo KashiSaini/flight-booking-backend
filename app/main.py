@@ -9,10 +9,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan,
               )
 
-@app.get("/")
-async def root():
-    return {"message": "Flight Booking API is running"}
-
 app.include_router(auth.router)
 app.include_router(booking.router)
 app.include_router(booking.bookings_router)
