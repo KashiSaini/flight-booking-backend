@@ -22,5 +22,5 @@ async def get_admin_user(
 ):
     if not current_user.is_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail="Only Admin users can create flights")
+                            detail="Only Admin users can Access this resource")
     return current_user

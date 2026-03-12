@@ -10,6 +10,12 @@ from app.utils import hash_password, verify_password, create_access_token, creat
 import os
 from dotenv import load_dotenv
 
+from fastapi.security import OAuth2PasswordBearer
+from fastapi import Request
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+
 load_dotenv()
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 
@@ -104,10 +110,22 @@ async def refresh_token(refresh_token: str = Body(...)):
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
     
+# @router.post("/logout")
+# async def logout(current_user: User = Depends(get_current_logged_user)):
+#     await redis_client.delete(f"refresh_token:{current_user.id}")
+#     return {"message": "Logged out successfully"}
+
 @router.post("/logout")
-async def logout(current_user: User = Depends(get_current_logged_user)):
+async def logout(
+    request: Request, 
+    token: str = Depends(oauth2_scheme),
+    current_user: User = Depends(get_current_logged_user)
+):
+    # 1. Revoke the Refresh Token (What you have now)
     await redis_client.delete(f"refresh_token:{current_user.id}")
-    return {"message": "Logged out successfully"}
+    # 2. Blacklist the Access Token (What you have now)
+    await redis_client.setex(f"blacklist:{token}", 1800, "true")
+    return {"message": "Logged out successfully and access token revoked"}
 
 
 @router.post("/promote-admin/{user_id}", response_model=UserResponse)

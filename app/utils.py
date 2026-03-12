@@ -6,6 +6,7 @@ from sqlalchemy import select
 import os
 from dotenv import load_dotenv
 
+from app import redis_client
 from app.models import User
 
 load_dotenv()
@@ -39,6 +40,14 @@ def decode_token(token: str):
     return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
 async def get_current_user(token: str, db):
+
+    is_blacklisted = await redis_client.get(f"blacklist:{token}")
+    if is_blacklisted:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been revoked. Please log in again."
+        )
+
     try:
         payload = decode_token(token)
         user_id: str = payload.get("sub")
