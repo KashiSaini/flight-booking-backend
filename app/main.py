@@ -8,7 +8,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan,
               )
-app.get("/")
+@app.get("/")
 async def root():
     return {"Message":"Backend is Working"}
 
