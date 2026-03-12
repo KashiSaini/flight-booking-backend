@@ -6,7 +6,7 @@ from sqlalchemy import select
 import os
 from dotenv import load_dotenv
 
-from app import redis_client
+from app.redis_client import redis_client
 from app.models import User
 
 load_dotenv()
