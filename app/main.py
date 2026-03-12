@@ -8,6 +8,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan,
               )
+app.get("/")
+async def root():
+    return {"Message":"Backend is Working"}
+
 
 app.include_router(auth.router)
 app.include_router(booking.router)
