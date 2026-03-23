@@ -7,35 +7,34 @@ A high-performance, containerized backend system designed for flight management.
 
 📁 Project Directory Structure
 
+```bash
 flight_booking/
 │
-├── alembic/                 # Database migration scripts
+├── alembic/                # Database migration scripts 
 │
 ├── app/
-│   │
-│   ├── admin.py             # Admin related API routes
-│   ├── auth.py              # Authentication APIs (login/register)
-│   ├── booking.py           # Flight seat booking APIs
-│   ├── database.py          # PostgreSQL async database setup
-│   ├── dependencies.py      # FastAPI dependency functions
-│   ├── main.py              # FastAPI application entry point
-│   ├── models.py            # SQLAlchemy database models
-│   ├── mongodb.py           # MongoDB connection for analytics
-│   ├── redis_client.py      # Redis connection for caching
-│   ├── schemas.py           # Pydantic request/response schemas
-│   ├── utils.py             # Utility functions (JWT, hashing, etc.)
-│   └── __pycache__/         # Python compiled cache files
-│
-├── tools/                   # Development helper scripts
-├── venv/                    # Python virtual environment
-│
-├── .dockerignore            # Files ignored during Docker build
-├── .env                     # Environment variables
-├── .gitignore               # Files ignored by Git
-├── alembic.ini              # Alembic migration configuration
-├── docker-compose.yml       # Multi-container Docker setup
-├── Dockerfile               # Docker image build instructions
-└── README.md                # Project documentation
+│   ├── admin.py            # Admin related API routes
+│   ├── auth.py             # Authentication APIs
+│   ├── booking.py          # Flight seat booking APIs
+│   ├── database.py         # PostgreSQL async database setup
+│   ├── dependencies.py     # FastAPI dependency functions
+│   ├── main.py             # FastAPI application entry point
+│   ├── models.py           # SQLAlchemy database models
+│   ├── mongodb.py          # MongoDB connection for analytics
+│   ├── redis_client.py     # Redis connection for caching
+│   ├── schemas.py          # Pydantic request/response schemas
+│   ├── utils.py            # Utility functions
+│   ├── tools/              # Development helper scripts
+│   └── __pycache__/        # Python cache files
+├── .dockerignore
+├── .env
+├── .gitignore
+├── alembic.ini
+├── docker-compose.yml
+├── Dockerfile
+├── README.md
+└── requirements.txt
+```
 
 
 
