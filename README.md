@@ -8,24 +8,20 @@ A high-performance, containerized backend system designed for flight management.
 📁 Project Directory Structure
 
 ```bash
-flight_booking/
-│
-├── alembic/                # Database migration scripts 
-│
+flight-booking-backend/
+├── alembic/                    # Database migration scripts
 ├── app/
-│   ├── admin.py            # Admin related API routes
-│   ├── auth.py             # Authentication APIs
-│   ├── booking.py          # Flight seat booking APIs
-│   ├── database.py         # PostgreSQL async database setup
-│   ├── dependencies.py     # FastAPI dependency functions
-│   ├── main.py             # FastAPI application entry point
-│   ├── models.py           # SQLAlchemy database models
-│   ├── mongodb.py          # MongoDB connection for analytics
-│   ├── redis_client.py     # Redis connection for caching
-│   ├── schemas.py          # Pydantic request/response schemas
-│   ├── utils.py            # Utility functions
-│   ├── tools/              # Development helper scripts
-│   └── __pycache__/        # Python cache files
+│   ├── api/
+│   │   └── dependencies/       # Shared FastAPI dependencies
+│   ├── core/                   # App configuration and security helpers
+│   ├── db/                     # PostgreSQL, MongoDB, and Redis setup
+│   ├── models/                 # SQLAlchemy models
+│   ├── routers/                # Route modules for auth, flights, bookings, admin, and private jets
+│   ├── schemas/                # Pydantic request/response schemas
+│   ├── services/               # Business logic layer
+│   ├── main.py                 # FastAPI application entry point
+│   └── __init__.py
+├── tools/                      # Development helper scripts
 ├── .dockerignore
 ├── .env
 ├── .gitignore
