@@ -1,21 +1,82 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  # 1. Your FastAPI Backend
-  api:
-    build: .
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    container_name: auth-service
     ports:
-      - "8000:8000"
+      - "8001:8000"
+    env_file:
+      - .env
     volumes:
-      - .:/code          # Maps your local folder to the container for "Live Reload"
+      - .:/code
+    depends_on:
+      - postgres
+      - redis
+
+  flight-service:
+    build:
+      context: .
+      dockerfile: services/flight-service/Dockerfile
+    container_name: flight-service
+    ports:
+      - "8002:8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/code
     depends_on:
       - postgres
       - redis
       - mongo
+
+  booking-service:
+    build:
+      context: .
+      dockerfile: services/booking-service/Dockerfile
+    container_name: booking-service
+    ports:
+      - "8003:8000"
     env_file:
       - .env
+    volumes:
+      - .:/code
+    depends_on:
+      - postgres
+      - redis
+      - mongo
 
-  # 2. PostgreSQL Database
+  private-jet-service:
+    build:
+      context: .
+      dockerfile: services/private-jet-service/Dockerfile
+    container_name: private-jet-service
+    ports:
+      - "8004:8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/code
+    depends_on:
+      - postgres
+
+  admin-service:
+    build:
+      context: .
+      dockerfile: services/admin-service/Dockerfile
+    container_name: admin-service
+    ports:
+      - "8005:8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/code
+    depends_on:
+      - postgres
+      - mongo
+
   postgres:
     image: postgres:15-alpine
     environment:
@@ -23,27 +84,24 @@ services:
       POSTGRES_PASSWORD: kashi
       POSTGRES_DB: flight
     ports:
-      - "5433:5432"      # External Port 5433 for pgAdmin
+      - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data # Permanent storage
+      - postgres_data:/var/lib/postgresql/data
 
-  # 3. Redis Cache
   redis:
     image: redis:alpine
     ports:
-      - "6380:6379"      # External Port 6380 for your Ubuntu terminal
+      - "6380:6379"
     volumes:
-      - redis_data:/data # Permanent storage
+      - redis_data:/data
 
-  # 4. MongoDB
   mongo:
     image: mongo:latest
     ports:
-      - "27018:27017"    # External Port 27018 for MongoDB Compass
+      - "27018:27017"
     volumes:
-      - mongo_data:/data/db # Permanent storage
+      - mongo_data:/data/db
 
-# The permanent virtual hard drives
 volumes:
   postgres_data:
   redis_data:
