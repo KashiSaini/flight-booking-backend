@@ -96,7 +96,6 @@ In this phase, everything was local and manually managed.
 ## Phase 2 — Dockerized Single-App Backend
 
 After that, the project moved to Docker.
-
 In this stage, the backend still behaved like **one FastAPI application**, but the infrastructure became containerized.
 
 Main benefits gained in this phase:
