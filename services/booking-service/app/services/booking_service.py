@@ -4,6 +4,8 @@ from fastapi import BackgroundTasks, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from shared.tasks.booking_task import send_booking_confirmation_email
+
 from app.schemas.booking import BookingCreate
 from shared.db.redis import redis_client
 from shared.models.booking import Booking
@@ -113,6 +115,31 @@ async def book_flight(
             "Booked_By": current_user.name,
         },
     )
+    recipient_email = booking_in.contact_email or current_user.email
+    if recipient_email:
+        send_booking_confirmation_email.delay(
+            to_email=recipient_email,
+            booked_by=current_user.name,
+            flight={
+                "id": flight.id,
+                "source": flight.source,
+                "destination": flight.destination,
+                "departure_time": flight.departure_time.isoformat() if flight.departure_time else None,
+                "airline": flight.airline,
+            },
+            passengers=[
+                {
+                    "passenger_name": b.passenger_name,
+                    "seat_number": b.seat_number,
+                    "seat_type": b.seat_type,
+                    "destination": b.destination,
+                    "price_paid": float(b.price_paid or 0),
+                    "booking_reference": b.booking_reference,
+                }
+                for b in bookings
+            ],
+        )
+
     return bookings
 
 async def get_user_bookings(skip: int, limit: int, current_user: User, db: AsyncSession):

@@ -48,6 +48,22 @@ services:
       - redis
       - mongo
 
+  booking-worker:
+    build:
+      context: .
+      dockerfile: services/booking-service/Dockerfile
+    container_name: booking-worker
+    command: celery -A shared.core.celery_app:celery_app worker --loglevel=INFO
+    env_file:
+      - .env
+    volumes:
+      - .:/code
+    depends_on:
+      - redis
+      - postgres
+      - mongo
+    restart: unless-stopped
+
   private-jet-service:
     build:
       context: .

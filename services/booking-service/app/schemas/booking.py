@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 class PassengerBooking(BaseModel):
     passenger_name: str
@@ -8,6 +8,7 @@ class PassengerBooking(BaseModel):
     seat_number: str
 
 class BookingCreate(BaseModel):
+    contact_email: EmailStr | None = None
     passengers: list[PassengerBooking]
 
 class BookingResponse(BaseModel):
