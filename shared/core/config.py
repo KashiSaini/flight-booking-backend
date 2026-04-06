@@ -12,3 +12,6 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 REDIS_URL = os.getenv("REDIS_URL")
 MONGO_URL = os.getenv("MONGO_URL")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
+
+KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
+BOOKING_EVENTS_TOPIC = os.getenv("BOOKING_EVENTS_TOPIC", "booking-events")

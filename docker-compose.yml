@@ -47,6 +47,7 @@ services:
       - postgres
       - redis
       - mongo
+      - kafka
 
   booking-worker:
     build:
@@ -92,6 +93,7 @@ services:
     depends_on:
       - postgres
       - mongo
+      - kafka
 
   postgres:
     image: postgres:15-alpine
@@ -117,6 +119,12 @@ services:
       - "27018:27017"
     volumes:
       - mongo_data:/data/db
+
+  kafka:
+    image: apache/kafka:4.2.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
 
 volumes:
   postgres_data:

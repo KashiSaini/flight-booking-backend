@@ -7,11 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from shared.tasks.booking_task import send_booking_confirmation_email
 
 from app.schemas.booking import BookingCreate
+from app.services.kafka_producer import publish_booking_event
 from shared.db.redis import redis_client
 from shared.models.booking import Booking
 from shared.models.flight import Flight, Seat
 from shared.models.user import User
 from shared.observability import log_user_activity
+
 
 def _compute_price_for_destination(flight: Flight, seat_type: str, destination: str) -> float:
     route = [flight.source] + (flight.stops or []) + [flight.destination]
@@ -32,6 +34,7 @@ def _compute_price_for_destination(flight: Flight, seat_type: str, destination: 
             return getattr(flight, f"{seat_type}_price") or 0.0
         total += float(price)
     return total
+
 
 async def book_flight(
     flight_id: int,
@@ -73,7 +76,10 @@ async def book_flight(
         if seat.is_booked:
             raise HTTPException(status_code=400, detail=f"Seat {passenger.seat_number} is already booked")
         if seat.seat_type != passenger.seat_type:
-            raise HTTPException(status_code=400, detail=f"Seat {passenger.seat_number} is a {seat.seat_type} seat, not {passenger.seat_type}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Seat {passenger.seat_number} is a {seat.seat_type} seat, not {passenger.seat_type}",
+            )
 
         seat.is_booked = True
         price_paid = _compute_price_for_destination(flight, passenger.seat_type, passenger.destination)
@@ -100,10 +106,12 @@ async def book_flight(
             flight.economy_seats = (flight.economy_seats or 0) - 1
 
     await db.commit()
+
     for booking in bookings:
         await db.refresh(booking)
 
     await redis_client.delete("flights_cache")
+
     background_tasks.add_task(
         log_user_activity,
         user_id=current_user.id,
@@ -115,6 +123,7 @@ async def book_flight(
             "Booked_By": current_user.name,
         },
     )
+
     recipient_email = booking_in.contact_email or current_user.email
     if recipient_email:
         send_booking_confirmation_email.delay(
@@ -140,7 +149,37 @@ async def book_flight(
             ],
         )
 
+    try:
+        await publish_booking_event(
+            {
+                "event_type": "booking_created",
+                "user_id": current_user.id,
+                "booked_by": current_user.name,
+                "flight": {
+                    "id": flight.id,
+                    "source": flight.source,
+                    "destination": flight.destination,
+                    "airline": flight.airline,
+                },
+                "passengers": [
+                    {
+                        "booking_id": b.id,
+                        "passenger_name": b.passenger_name,
+                        "seat_number": b.seat_number,
+                        "seat_type": b.seat_type,
+                        "destination": b.destination,
+                        "price_paid": float(b.price_paid or 0),
+                        "booking_reference": b.booking_reference,
+                    }
+                    for b in bookings
+                ],
+            }
+        )
+    except Exception as exc:
+        print(f"Kafka publish failed after booking commit: {exc}")
+
     return bookings
+
 
 async def get_user_bookings(skip: int, limit: int, current_user: User, db: AsyncSession):
     result = await db.execute(
@@ -148,12 +187,16 @@ async def get_user_bookings(skip: int, limit: int, current_user: User, db: Async
     )
     return result.scalars().all()
 
+
 async def get_booking(booking_id: int, current_user: User, db: AsyncSession):
-    result = await db.execute(select(Booking).where((Booking.id == booking_id) & (Booking.user_id == current_user.id)))
+    result = await db.execute(
+        select(Booking).where((Booking.id == booking_id) & (Booking.user_id == current_user.id))
+    )
     booking = result.scalar_one_or_none()
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
     return booking
+
 
 async def cancel_booking(
     booking_id: int,
@@ -161,10 +204,24 @@ async def cancel_booking(
     current_user: User,
     db: AsyncSession,
 ):
-    result = await db.execute(select(Booking).where((Booking.id == booking_id) & (Booking.user_id == current_user.id)))
+    result = await db.execute(
+        select(Booking).where((Booking.id == booking_id) & (Booking.user_id == current_user.id))
+    )
     booking = result.scalar_one_or_none()
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
+
+    cancelled_booking_data = {
+        "booking_id": booking.id,
+        "flight_id": booking.flight_id,
+        "seat_id": booking.seat_id,
+        "seat_number": booking.seat_number,
+        "seat_type": booking.seat_type,
+        "price_paid": float(booking.price_paid or 0),
+        "passenger_name": booking.passenger_name,
+        "destination": booking.destination,
+        "booking_reference": booking.booking_reference,
+    }
 
     flight_result = await db.execute(select(Flight).where(Flight.id == booking.flight_id).with_for_update())
     flight = flight_result.scalar_one_or_none()
@@ -201,4 +258,23 @@ async def cancel_booking(
         action="CANCEL_BOOKING",
         details={"booking_id": booking_id, "BY": current_user.name},
     )
+
+    try:
+        await publish_booking_event(
+            {
+                "event_type": "booking_cancelled",
+                "user_id": current_user.id,
+                "cancelled_by": current_user.name,
+                "flight": {
+                    "id": flight.id,
+                    "source": flight.source,
+                    "destination": flight.destination,
+                    "airline": flight.airline,
+                },
+                "booking": cancelled_booking_data,
+            }
+        )
+    except Exception as exc:
+        print(f"Kafka publish failed after cancel commit: {exc}")
+
     return {"message": "Booking cancelled successfully"}
